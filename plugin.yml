@@ -3,5 +3,10 @@ main: com.github.jdog653.publicexecution.PublicExecution
 version: .01
 
 commands:
-
+    execute:
+            description: Executes the given Player
+            usage: /execute <PLAYER_NAME>
+        setexecutionarea:
+            description: Sets the area of execution to the current block
+            usage: /setexecutionarea
 permissions:
