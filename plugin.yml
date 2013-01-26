@@ -1,0 +1,7 @@
+name: PublicExecution
+main: com.github.jdog653.publicexecution.PublicExecution
+version: .01
+
+commands:
+
+permissions:
