@@ -43,10 +43,11 @@ public class PublicExecution extends JavaPlugin implements Listener
     @EventHandler
     public void tryToMove(PlayerMoveEvent e)
     {
+
         if(toBeBanned.contains(e.getPlayer().getName()))
         {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage("You're to be executed, you're going nowhere!");
+            e.setTo(e.getFrom());
+            e.getPlayer().sendMessage("You're to be executed, you're not going anywhere!");
         }
     }
 
@@ -82,44 +83,97 @@ public class PublicExecution extends JavaPlugin implements Listener
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
     {
-        switch (command.getName())
+        if(command.getName().equalsIgnoreCase("pe"))
         {
-            case "execute":
-                if(args.length == 1)
+            if(args.length > 0)
+            {
+                switch (args[0])
                 {
-                    Player p = Bukkit.getServer().getPlayer(args[0]);
-                    if(p != null)
-                    {
-                        try
+                    case "execute":
+                        if(args.length == 2)
                         {
-                            p.teleport(executionLoc);
-                        }
-                        catch (NullPointerException e)
-                        {
-                            sender.sendMessage("The Execution Location has not been set! Set it with /setExecutionArea");
+                            Player p = Bukkit.getServer().getPlayer(args[1]);
+
+                            if(p != null)
+                            {
+                                try
+                                {
+                                    p.teleport(executionLoc);
+                                }
+                                catch (NullPointerException e)
+                                {
+                                    sender.sendMessage("The Execution Location has not been set! Set it with /pe setarea");
+                                    return true;
+                                }
+
+                                toBeBanned.add(p.getName());
+                                Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                            }
+                            else
+                            {
+                                sender.sendMessage(args[1] + " isn't online!");
+                            }
                             return true;
                         }
-
-                        toBeBanned.add(p.getName());
-                        Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                        else
+                        {
+                            sender.sendMessage("Please specify a Player!");
+                            return false;
+                        }
+                    case "setarea":
+                        if(sender instanceof Player)
+                        {
+                            if(args.length == 1)
+                            {
+                                executionLoc = ((Player)sender).getLocation();
+                                sender.sendMessage("Execution Location has been set!");
+                            }
+                            else
+                            {
+                                sender.sendMessage("Invalid number of arguments!");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            sender.sendMessage("You must be in-game to set the location!");
+                        }
                         return true;
-                    }
 
-                    sender.sendMessage(args[0] + " isn't online!");
+                    case "release":
+                        if(args.length == 2)
+                        {
+                            Player p = Bukkit.getServer().getPlayer(args[1]);
+
+                            if(p != null)
+                            {
+                                if(toBeBanned.contains(p.getName()))
+                                {
+                                    toBeBanned.remove(p.getName());
+                                    Bukkit.broadcastMessage(p.getName() + " has been released!");
+                                }
+                                else
+                                {
+                                    sender.sendMessage(p.getName() + " isn't on death row!");
+                                }
+                            }
+                            else
+                            {
+                                sender.sendMessage(args[1] + " isn't online!");
+                            }
+                            return true;
+                        }
+                        else
+                        {
+                            sender.sendMessage("Please specify a Player!");
+                            return false;
+                        }
                 }
+                sender.sendMessage("Invalid Command!");
                 return false;
-            case "setexecutionarea":
-                if(sender instanceof Player)
-                {
-                    if(args.length == 0)
-                    {
-                        executionLoc = ((Player)sender).getLocation();
-                        sender.sendMessage("Execution Location has been set!");
-                        return true;
-                    }
-                    return false;
-                }
-
+            }
+            sender.sendMessage("You must supply a command!");
+            return false;
         }
         return true;
     }
