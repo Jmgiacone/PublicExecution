@@ -2,6 +2,7 @@ package com.github.jdog653.publicexecution;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -34,6 +35,15 @@ public class PublicExecution extends JavaPlugin implements Listener
     public void onEnable()
     {
         getServer().getPluginManager().registerEvents(this, this);
+        if(getConfig().get("ExecutionLocation") != null)
+        {
+            double x = getConfig().getDouble("ExecutionLocation.X"),
+                    y = getConfig().getDouble("ExecutionLocation.Y"),
+                    z = getConfig().getDouble("ExecutionLocation.Z");
+
+            World w = Bukkit.getWorld(getConfig().getString("ExecutionLocation.World"));
+            executionLoc = new Location(w, x, y, z);
+        }
     }
 
     @Override
@@ -130,6 +140,11 @@ public class PublicExecution extends JavaPlugin implements Listener
                                     }
 
                                     toBeBanned.add(p.getName());
+                                    getConfig().set("ToBeExecuted",
+                                            (getConfig().getString("ToBeExecuted") == null ?
+                                            "" :
+                                            getConfig().getString("ToBeExecuted") + ";") + p.getName());
+                                    saveConfig();
                                     Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
                                 }
                                 else
@@ -154,6 +169,14 @@ public class PublicExecution extends JavaPlugin implements Listener
                                 if(args.length == 1)
                                 {
                                     executionLoc = ((Player)sender).getLocation();
+                                    getConfig().set("ExecutionLocation.World" , executionLoc.getWorld().getName());
+                                    getConfig().set("ExecutionLocation.X" , executionLoc.getX());
+                                    getConfig().set("ExecutionLocation.Y" , executionLoc.getY());
+                                    getConfig().set("ExecutionLocation.Z" , executionLoc.getZ());
+                                    getConfig().set("ExecutionLocation.Yaw" , executionLoc.getYaw());
+                                    getConfig().set("ExecutionLocation.Pitch" , executionLoc.getPitch());
+
+                                    saveConfig();
                                     sender.sendMessage("Execution Location has been set!");
                                 }
                                 else
