@@ -4,4 +4,21 @@ version: .01
 
 commands:
     pe:
-        description: Provides access to all PublicExecution commands
+        description:
+        usage:
+permissions:
+    pe.*:
+        description: Gives access to all PublicExecution commands
+        children:
+            pe.setarea: true
+            pe.execute: true
+            pe.pardon: true
+    pe.setarea:
+        description: Set the execution area
+        default: op
+    pe.execute:
+        description: Allows execution of a specified player
+        default: op
+    pe.pardon:
+        description: Pardons the given player from execution
+        default: op
