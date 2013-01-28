@@ -43,6 +43,14 @@ public class PublicExecution extends JavaPlugin implements Listener
 
             World w = Bukkit.getWorld(getConfig().getString("ExecutionLocation.World"));
             executionLoc = new Location(w, x, y, z);
+
+            if(getConfig().getString("ToBeExecuted") != null)
+            {
+                for(String s : getConfig().getString("ToBeExecuted").split(";"))
+                {
+                    toBeBanned.add(s);
+                }
+            }
         }
     }
 
@@ -111,6 +119,21 @@ public class PublicExecution extends JavaPlugin implements Listener
         }
     }
 
+    private String listMinus(String n)
+    {
+        String[] names = getConfig().getString("ToBeExecuted").split(";");
+        String newNames = "";
+
+        for(String s : names)
+        {
+            if(!s.equalsIgnoreCase(n))
+            {
+                newNames += s + ";";
+            }
+        }
+
+        return newNames;
+    }
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
     {
@@ -129,23 +152,44 @@ public class PublicExecution extends JavaPlugin implements Listener
 
                                 if(p != null)
                                 {
-                                    try
+                                    if(!toBeBanned.contains(p.getName()))
                                     {
-                                        p.teleport(executionLoc);
-                                    }
-                                    catch (NullPointerException e)
-                                    {
-                                        sender.sendMessage("The Execution Location has not been set! Set it with /pe setarea");
-                                        return true;
-                                    }
+                                        try
+                                        {
+                                            p.teleport(executionLoc);
+                                        }
+                                        catch (NullPointerException e)
+                                        {
+                                            sender.sendMessage("The Execution Location has not been set! Set it with /pe setarea");
+                                            return true;
+                                        }
 
-                                    toBeBanned.add(p.getName());
-                                    getConfig().set("ToBeExecuted",
-                                            (getConfig().getString("ToBeExecuted") == null ?
-                                            "" :
-                                            getConfig().getString("ToBeExecuted") + ";") + p.getName());
-                                    saveConfig();
-                                    Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                                        toBeBanned.add(p.getName());
+
+                                        if(getConfig().get("ToBeExecuted") != null)
+                                        {
+                                            String[] names = getConfig().getString("ToBeExecuted").split(";");
+
+                                            if(names.length != 0)
+                                            {
+                                                getConfig().set("ToBeExecuted", p.getName() + ";");
+                                            }
+                                            else
+                                            {
+                                                getConfig().set("ToBeExecuted",
+                                                        getConfig().getString("ToBeExecuted") + p.getName() + ";");
+                                            }
+                                        }
+
+
+                                        getConfig().set("ToBeExecuted", p.getName() + ";");
+                                        saveConfig();
+                                        Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                                    }
+                                    else
+                                    {
+                                        sender.sendMessage(p.getName() + " is already on Death Row!");
+                                    }
                                 }
                                 else
                                 {
@@ -208,11 +252,20 @@ public class PublicExecution extends JavaPlugin implements Listener
                                     if(toBeBanned.contains(p.getName()))
                                     {
                                         toBeBanned.remove(p.getName());
+                                        if(listMinus(p.getName()).equals(""))
+                                        {
+                                            getConfig().set("ToBeExecuted", null);
+                                        }
+                                        else
+                                        {
+                                            getConfig().set("ToBeExecuted", listMinus(p.getName()));
+                                        }
+                                        saveConfig();
                                         Bukkit.broadcastMessage(p.getName() + " has been released!");
                                     }
                                     else
                                     {
-                                        sender.sendMessage(p.getName() + " isn't on death row!");
+                                        sender.sendMessage(p.getName() + " isn't on Death Row!");
                                     }
                                 }
                                 else
