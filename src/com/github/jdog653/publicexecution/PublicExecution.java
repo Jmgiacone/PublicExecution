@@ -84,7 +84,7 @@ public class PublicExecution extends JavaPlugin implements Listener
                 p.setBanned(true);
                 Bukkit.broadcastMessage(p.getName() + " has been banned!");
                 toBeBanned.remove(p.getName());
-                p.kickPlayer("Goodbye!");
+                p.kickPlayer("Goodbye, " + p.getName() + "!");
             }
         }
 
