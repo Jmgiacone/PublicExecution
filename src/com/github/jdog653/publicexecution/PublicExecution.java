@@ -7,6 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -41,6 +43,25 @@ public class PublicExecution extends JavaPlugin implements Listener
     }
 
     @EventHandler
+    public void blockPlaced(BlockPlaceEvent e)
+    {
+        if(toBeBanned.contains(e.getPlayer().getName()))
+        {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage("You can't place blocks while awaiting execution!");
+        }
+    }
+
+    @EventHandler
+    public void blockBroken(BlockBreakEvent e)
+    {
+        if(toBeBanned.contains(e.getPlayer().getName()))
+        {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage("You can't break blocks while awaiting execution!");
+        }
+    }
+    @EventHandler
     public void tryToMove(PlayerMoveEvent e)
     {
 
@@ -63,7 +84,7 @@ public class PublicExecution extends JavaPlugin implements Listener
                 p.setBanned(true);
                 Bukkit.broadcastMessage(p.getName() + " has been banned!");
                 toBeBanned.remove(p.getName());
-                p.kickPlayer("You're stupid");
+                p.kickPlayer("Goodbye!");
             }
         }
 
@@ -90,48 +111,60 @@ public class PublicExecution extends JavaPlugin implements Listener
                 switch (args[0])
                 {
                     case "execute":
-                        if(args.length == 2)
+                        if(sender.hasPermission("pe.execute"))
                         {
-                            Player p = Bukkit.getServer().getPlayer(args[1]);
-
-                            if(p != null)
+                            if(args.length == 2)
                             {
-                                try
-                                {
-                                    p.teleport(executionLoc);
-                                }
-                                catch (NullPointerException e)
-                                {
-                                    sender.sendMessage("The Execution Location has not been set! Set it with /pe setarea");
-                                    return true;
-                                }
+                                Player p = Bukkit.getServer().getPlayer(args[1]);
 
-                                toBeBanned.add(p.getName());
-                                Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                                if(p != null)
+                                {
+                                    try
+                                    {
+                                        p.teleport(executionLoc);
+                                    }
+                                    catch (NullPointerException e)
+                                    {
+                                        sender.sendMessage("The Execution Location has not been set! Set it with /pe setarea");
+                                        return true;
+                                    }
+
+                                    toBeBanned.add(p.getName());
+                                    Bukkit.broadcastMessage(p.getName() + " is about to be executed!");
+                                }
+                                else
+                                {
+                                    sender.sendMessage(args[1] + " isn't online!");
+                                }
+                                return true;
                             }
                             else
                             {
-                                sender.sendMessage(args[1] + " isn't online!");
+                                sender.sendMessage("Please specify a Player!");
+                                return false;
                             }
-                            return true;
                         }
-                        else
-                        {
-                            sender.sendMessage("Please specify a Player!");
-                            return false;
-                        }
+                        sender.sendMessage("You don't have permission to execute anyone...");
+                        return true;
                     case "setarea":
                         if(sender instanceof Player)
                         {
-                            if(args.length == 1)
+                            if(sender.hasPermission("pe.setarea"))
                             {
-                                executionLoc = ((Player)sender).getLocation();
-                                sender.sendMessage("Execution Location has been set!");
+                                if(args.length == 1)
+                                {
+                                    executionLoc = ((Player)sender).getLocation();
+                                    sender.sendMessage("Execution Location has been set!");
+                                }
+                                else
+                                {
+                                    sender.sendMessage("Invalid number of arguments!");
+                                    return false;
+                                }
                             }
                             else
                             {
-                                sender.sendMessage("Invalid number of arguments!");
-                                return false;
+                                sender.sendMessage("You don't have permission to set / change the location of the executions!");
                             }
                         }
                         else
@@ -140,33 +173,41 @@ public class PublicExecution extends JavaPlugin implements Listener
                         }
                         return true;
 
-                    case "release":
-                        if(args.length == 2)
+                    case "pardon":
+                        if(sender.hasPermission("pe.pardon"))
                         {
-                            Player p = Bukkit.getServer().getPlayer(args[1]);
-
-                            if(p != null)
+                            if(args.length == 2)
                             {
-                                if(toBeBanned.contains(p.getName()))
+                                Player p = Bukkit.getServer().getPlayer(args[1]);
+
+                                if(p != null)
                                 {
-                                    toBeBanned.remove(p.getName());
-                                    Bukkit.broadcastMessage(p.getName() + " has been released!");
+                                    if(toBeBanned.contains(p.getName()))
+                                    {
+                                        toBeBanned.remove(p.getName());
+                                        Bukkit.broadcastMessage(p.getName() + " has been released!");
+                                    }
+                                    else
+                                    {
+                                        sender.sendMessage(p.getName() + " isn't on death row!");
+                                    }
                                 }
                                 else
                                 {
-                                    sender.sendMessage(p.getName() + " isn't on death row!");
+                                    sender.sendMessage(args[1] + " isn't online!");
                                 }
+                                return true;
                             }
                             else
                             {
-                                sender.sendMessage(args[1] + " isn't online!");
+                                sender.sendMessage("Please specify a Player!");
+                                return false;
                             }
-                            return true;
                         }
                         else
                         {
-                            sender.sendMessage("Please specify a Player!");
-                            return false;
+                            sender.sendMessage("You don't have permission to pardon anybody!");
+                            return true;
                         }
                 }
                 sender.sendMessage("Invalid Command!");
